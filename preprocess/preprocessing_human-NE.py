@@ -86,16 +86,7 @@ def index2adj(edge_index):
     return adjacency_matrix
 def adj2index(edge_index):
     adj = to_dense_adj(edge_index)
-    edge_index_square, _ = torch_sparse.spspmm(edge_index, None, edge_index, None, adj.shape[1], adj.shape[1],
-                                               adj.shape[1], coalesced=True)
-    edge_index_cube, _ = torch_sparse.spspmm(edge_index_square, None, edge_index, None, adj.shape[1], adj.shape[1],
-                                             adj.shape[1], coalesced=True)
-    edge_index_quad, _ = torch_sparse.spspmm(edge_index_cube, None, edge_index, None, adj.shape[1], adj.shape[1],
-                                             adj.shape[1], coalesced=True)
-    edge_index_quin, _ = torch_sparse.spspmm(edge_index_quad, None, edge_index, None, adj.shape[1], adj.shape[1],
-                                             adj.shape[1], coalesced=True)
-    A = index2adj(edge_index_quin) + index2adj(edge_index_quad)
-    # A = index2adj(edge_index)
+    A = index2adj(edge_index)
 
     A = [[1. if x != 0. else 0. for x in row] for row in A]
     # 邻接矩阵A

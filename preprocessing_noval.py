@@ -94,8 +94,8 @@ def adj2index(edge_index):
                                              adj.shape[1], coalesced=True)
     edge_index_quin, _ = torch_sparse.spspmm(edge_index_quad, None, edge_index, None, adj.shape[1], adj.shape[1],
                                              adj.shape[1], coalesced=True)
-    A = index2adj(edge_index_quin) + index2adj(edge_index_quad)
-    # A = index2adj(edge_index)
+    A = index2adj(edge_index_quad) + index2adj(edge_index_quin)
+    # A = index2adj(edge_index_cube)
 
     A = [[1. if x != 0. else 0. for x in row] for row in A]
     # 邻接矩阵A
@@ -116,11 +116,10 @@ def adj2index(edge_index):
     for e1, e2 in g.edges:
         edge_index.append([e1, e2])
     return edge_index
-a = []
+
 def mol_to_graph(mol):
     features = []
     for atom in mol.GetAtoms():
-        a.append(atom.GetSymbol())
         feature = atom_features(atom)
         features.append(feature / np.sum(feature))
 
@@ -255,7 +254,7 @@ class GNNDataset(InMemoryDataset):
 if __name__ == "__main__":
 
     GNNDataset(root='data/human')
-    print(list(set(a)))
+    # GNNDataset(root='data/celegans')
 
 
 

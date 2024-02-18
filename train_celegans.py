@@ -2,19 +2,20 @@
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 import math
+import numpy as np
 import torch.optim as optim
 import torch
 import torch.nn as nn
 from torch_geometric.data import DataLoader
 import torch.nn.functional as F
 import argparse
-from metrics import precision, auc_score, recall
+from sklearn.metrics import average_precision_score
+from metrics import accuracy, precision, auc_score, recall
 from dataset import *
 from ParaCPI import MGraphDTA
-# from model3_baseline import MGraphDTA
 from utils import *
 from log.train_logger import TrainLogger
-from preprocess.preprocessing_celegans import *
+
 def getROCE(predList,targetList,roceRate):
     p = sum(targetList)
     n = len(targetList) - p
@@ -83,7 +84,7 @@ def main():
     parser = argparse.ArgumentParser()
 
     # Add argument BindingDB
-    parser.add_argument('--dataset', default='human', help='GPCR or Kinase') #required=True,
+    parser.add_argument('--dataset', default='celegans', help='GPCR or Kinase') #required=True,
     parser.add_argument('--save_model', default='True', help='whether save model or not')
     parser.add_argument('--lr', type=float, default=5e-4, help='learning rate')
     parser.add_argument('--batch_size', type=int, default=512, help='batch_size')
@@ -105,7 +106,7 @@ def main():
     save_model = params.get("save_model")
     data_root = params.get("data_root")
     fpath = os.path.join(data_root, DATASET)
-    GNNDataset(root=fpath)
+
     train_set = GNNDataset(fpath, types='train')
     test_set = GNNDataset(fpath, types='test')
 
@@ -125,6 +126,7 @@ def main():
 
     optimizer = optim.Adam(model.parameters(), lr=params['lr'])
     criterion = nn.CrossEntropyLoss()
+
     global_step = 0
     global_epoch = 0
 
@@ -157,12 +159,9 @@ def main():
                 msg = "epoch-%d, loss-%.3f, test_pre-%.3f, test_rec-%.3f, test_auc-%.3f" % (global_epoch, test_loss,test_pre, test_rec, test_auc)
                 logger.info(msg)
 
-                if save_model:
+                if save_model and test_auc >=0.995:
                     save_model_dict(model, logger.get_model_dir(), msg)
-                # if i >= num_iter-2:
-                #     save_model_dict(model, logger.get_model_dir(), msg)
 
 
 if __name__ == "__main__":
-    
     main()

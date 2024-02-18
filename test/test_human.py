@@ -14,7 +14,7 @@ from sklearn.metrics import average_precision_score,precision_recall_curve,auc
 
 from metrics import get_cindex, get_rm2
 from dataset import *
-from model3 import MGraphDTA
+from ParaCPI import MGraphDTA
 from utils import *
 from metrics import *
 from sklearn.datasets import load_breast_cancer

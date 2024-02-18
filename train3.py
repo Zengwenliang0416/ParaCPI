@@ -2,36 +2,21 @@
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 import math
+import numpy as np
 import torch.optim as optim
 import torch
 import torch.nn as nn
 from torch_geometric.data import DataLoader
 import torch.nn.functional as F
 import argparse
-from metrics import precision, auc_score, recall
+
+from metrics import accuracy, precision, auc_score, recall
 from dataset import *
 from ParaCPI import MGraphDTA
-# from model3_baseline import MGraphDTA
 from utils import *
 from log.train_logger import TrainLogger
-from preprocess.preprocessing_celegans import *
-def getROCE(predList,targetList,roceRate):
-    p = sum(targetList)
-    n = len(targetList) - p
-    predList = [[index,x] for index,x in enumerate(predList)]
-    predList = sorted(predList,key = lambda x:x[1],reverse = True)
-    tp1 = 0
-    fp1 = 0
-    #maxIndexs = []
-    for x in predList:
-        if(targetList[x[0]] == 1):
-            tp1 += 1
-        else:
-            fp1 += 1
-            if(fp1>((roceRate*n)/100)):
-                break
-    roce = (tp1*n)/(p*fp1)
-    return roce
+
+
 def val(model, criterion, dataloader, device):
     model.eval()
     running_loss = AverageMeter()
@@ -62,28 +47,23 @@ def val(model, criterion, dataloader, device):
     pred_cls = np.concatenate(pred_cls_list, axis=0)
     label = np.concatenate(label_list, axis=0)
 
-
-    pre = round(precision(label, pred_cls), 3)
-    rec = round(recall(label, pred_cls), 3)
-    auc = round(auc_score(label, pred), 3)
-
-    # pre = precision(label, pred_cls)
-    # rec = recall(label, pred_cls)
-    # auc = auc_score(label, pred)
-
+    acc = accuracy(label, pred_cls)
+    pre = precision(label, pred_cls)
+    rec = recall(label, pred_cls)
+    auc = auc_score(label, pred)
 
     epoch_loss = running_loss.get_average()
     running_loss.reset()
 
     model.train()
 
-    return epoch_loss, pre, rec, auc
+    return epoch_loss, acc, pre, rec, auc
 
 def main():
     parser = argparse.ArgumentParser()
 
     # Add argument BindingDB
-    parser.add_argument('--dataset', default='human', help='GPCR or Kinase') #required=True,
+    parser.add_argument('--dataset', default='BindingDB', help='human or celegans') #required=True,
     parser.add_argument('--save_model', default='True', help='whether save model or not')
     parser.add_argument('--lr', type=float, default=5e-4, help='learning rate')
     parser.add_argument('--batch_size', type=int, default=512, help='batch_size')
@@ -105,18 +85,21 @@ def main():
     save_model = params.get("save_model")
     data_root = params.get("data_root")
     fpath = os.path.join(data_root, DATASET)
-    GNNDataset(root=fpath)
+
     train_set = GNNDataset(fpath, types='train')
+    val_set = GNNDataset(fpath, types='val')
     test_set = GNNDataset(fpath, types='test')
 
     logger.info(f"Number of train: {len(train_set)}")
+    logger.info(f"Number of val: {len(val_set)}")
     logger.info(f"Number of test: {len(test_set)}")
 
     train_loader = DataLoader(train_set, batch_size=params['batch_size'], shuffle=True, num_workers=4)
+    val_loader = DataLoader(val_set, batch_size=params['batch_size'], shuffle=False, num_workers=4)
     test_loader = DataLoader(test_set, batch_size=params['batch_size'], shuffle=False, num_workers=4)
 
     device = torch.device('cuda:0')
-    epochs = 100
+    epochs = 1000
     steps_per_epoch = 10
     n = len(train_loader)
     model = MGraphDTA(epochs, steps_per_epoch,n,filter_num=32, out_dim=2).to(device)
@@ -125,6 +108,7 @@ def main():
 
     optimizer = optim.Adam(model.parameters(), lr=params['lr'])
     criterion = nn.CrossEntropyLoss()
+
     global_step = 0
     global_epoch = 0
 
@@ -152,17 +136,15 @@ def main():
                 epoch_loss = running_loss.get_average()
                 running_loss.reset()
 
-                test_loss, test_pre, test_rec, test_auc= val(model, criterion, test_loader, device)
+                val_loss, val_acc, val_pre, val_rec, val_auc  = val(model, criterion, val_loader, device)
+                test_loss, test_acc, test_pre, test_rec, test_auc  = val(model, criterion, test_loader, device)
 
-                msg = "epoch-%d, loss-%.3f, test_pre-%.3f, test_rec-%.3f, test_auc-%.3f" % (global_epoch, test_loss,test_pre, test_rec, test_auc)
+                msg = "epoch-%d, loss-%.4f, val_auc-%.4f, test_loss-%.4f, test_acc-%.4f, test_pre-%.4f, test_rec-%.4f, test_auc-%.4f" % (global_epoch, epoch_loss, val_auc, test_loss, test_acc, test_pre, test_rec, test_auc)
                 logger.info(msg)
 
-                if save_model:
+                if save_model and test_auc >=0.95:
                     save_model_dict(model, logger.get_model_dir(), msg)
-                # if i >= num_iter-2:
-                #     save_model_dict(model, logger.get_model_dir(), msg)
 
 
 if __name__ == "__main__":
-    
     main()

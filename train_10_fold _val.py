@@ -2,19 +2,20 @@
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 import math
+import numpy as np
 import torch.optim as optim
 import torch
 import torch.nn as nn
 from torch_geometric.data import DataLoader
 import torch.nn.functional as F
 import argparse
-from metrics import precision, auc_score, recall
+from sklearn.model_selection import KFold
+from metrics import accuracy, precision, auc_score, recall
 from dataset import *
 from ParaCPI import MGraphDTA
-# from model3_baseline import MGraphDTA
 from utils import *
 from log.train_logger import TrainLogger
-from preprocess.preprocessing_celegans import *
+
 def getROCE(predList,targetList,roceRate):
     p = sum(targetList)
     n = len(targetList) - p
@@ -62,28 +63,27 @@ def val(model, criterion, dataloader, device):
     pred_cls = np.concatenate(pred_cls_list, axis=0)
     label = np.concatenate(label_list, axis=0)
 
-
-    pre = round(precision(label, pred_cls), 3)
-    rec = round(recall(label, pred_cls), 3)
-    auc = round(auc_score(label, pred), 3)
-
-    # pre = precision(label, pred_cls)
-    # rec = recall(label, pred_cls)
-    # auc = auc_score(label, pred)
-
+    acc = accuracy(label, pred_cls)
+    pre = precision(label, pred_cls)
+    rec = recall(label, pred_cls)
+    auc = auc_score(label, pred)
+    roce1 = round(getROCE(pred_cls, label, 0.5), 2)
+    roce2 = round(getROCE(pred_cls, label,  1), 2)
+    roce3 = round(getROCE(pred_cls, label,  2), 2)
+    roce4 = round(getROCE(pred_cls, label,  5), 2)
 
     epoch_loss = running_loss.get_average()
     running_loss.reset()
 
     model.train()
 
-    return epoch_loss, pre, rec, auc
+    return epoch_loss, acc, pre, rec, auc,roce1,roce2,roce3,roce4
 
 def main():
     parser = argparse.ArgumentParser()
 
     # Add argument BindingDB
-    parser.add_argument('--dataset', default='human', help='GPCR or Kinase') #required=True,
+    parser.add_argument('--dataset', default='DUDE', help='human or celegans') #required=True,
     parser.add_argument('--save_model', default='True', help='whether save model or not')
     parser.add_argument('--lr', type=float, default=5e-4, help='learning rate')
     parser.add_argument('--batch_size', type=int, default=512, help='batch_size')
@@ -105,35 +105,38 @@ def main():
     save_model = params.get("save_model")
     data_root = params.get("data_root")
     fpath = os.path.join(data_root, DATASET)
-    GNNDataset(root=fpath)
+    
+    kfold = KFold(n_splits=10, shuffle=True)
     train_set = GNNDataset(fpath, types='train')
     test_set = GNNDataset(fpath, types='test')
 
-    logger.info(f"Number of train: {len(train_set)}")
-    logger.info(f"Number of test: {len(test_set)}")
+    for fold, (train_index, val_index) in enumerate(kfold.split(train_set)):
+        # 获取训练集和验证集
+        train_set_fold = Subset(train_set, train_index)
+        val_set_fold = Subset(train_set, val_index)
+        
+        # 将训练集和验证集放入DataLoader中
+        train_loader_fold = DataLoader(train_set_fold, batch_size=params['batch_size'], shuffle=True, num_workers=4)
+        val_loader_fold = DataLoader(val_set_fold, batch_size=params['batch_size'], shuffle=False, num_workers=4)
+        device = torch.device('cuda:0')
+        epochs = 1000
+        steps_per_epoch = 10
+        n = len(train_loader_fold)
+        model = MGraphDTA(epochs, steps_per_epoch,n,filter_num=32, out_dim=2).to(device)
 
-    train_loader = DataLoader(train_set, batch_size=params['batch_size'], shuffle=True, num_workers=4)
-    test_loader = DataLoader(test_set, batch_size=params['batch_size'], shuffle=False, num_workers=4)
+        num_iter = math.ceil((epochs * steps_per_epoch) / len(train_loader_fold))
 
-    device = torch.device('cuda:0')
-    epochs = 100
-    steps_per_epoch = 10
-    n = len(train_loader)
-    model = MGraphDTA(epochs, steps_per_epoch,n,filter_num=32, out_dim=2).to(device)
+        optimizer = optim.Adam(model.parameters(), lr=params['lr'])
+        criterion = nn.CrossEntropyLoss()
 
-    num_iter = math.ceil((epochs * steps_per_epoch) / len(train_loader))
+        global_step = 0
+        global_epoch = 0
 
-    optimizer = optim.Adam(model.parameters(), lr=params['lr'])
-    criterion = nn.CrossEntropyLoss()
-    global_step = 0
-    global_epoch = 0
-
-    running_loss = AverageMeter()
-    torch.cuda.empty_cache()
-    model.train()
-
-    for i in range(num_iter):
-        for data in train_loader:
+        running_loss = AverageMeter()
+        model.train()
+        # 训练模型
+        for i in range(num_iter):
+          for data in train_loader_fold:
             global_step += 1
             data.y = data.y.long()
             data = data.to(device)
@@ -152,17 +155,15 @@ def main():
                 epoch_loss = running_loss.get_average()
                 running_loss.reset()
 
-                test_loss, test_pre, test_rec, test_auc= val(model, criterion, test_loader, device)
+                test_loss, test_acc, test_pre, test_rec, test_auc,roce1,roce2,roce3,roce4 = val(model, criterion, val_loader_fold, device)
 
-                msg = "epoch-%d, loss-%.3f, test_pre-%.3f, test_rec-%.3f, test_auc-%.3f" % (global_epoch, test_loss,test_pre, test_rec, test_auc)
+                msg = "epoch-%d, loss-%.3f, test_acc-%.3f, test_pre-%.3f, test_rec-%.3f, test_auc-%.3f, roce1-%.3f, roce2-%.3f, roce3-%.3f, roce4-%.3f" % (global_epoch, test_loss, test_acc, test_pre, test_rec, test_auc,roce1,roce2,roce3,roce4)
                 logger.info(msg)
 
-                if save_model:
+                if save_model and test_auc >=0.95:
                     save_model_dict(model, logger.get_model_dir(), msg)
-                # if i >= num_iter-2:
-                #     save_model_dict(model, logger.get_model_dir(), msg)
+
 
 
 if __name__ == "__main__":
-    
     main()

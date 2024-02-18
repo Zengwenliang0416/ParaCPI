@@ -2,19 +2,20 @@
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 import math
+import numpy as np
 import torch.optim as optim
 import torch
 import torch.nn as nn
 from torch_geometric.data import DataLoader
 import torch.nn.functional as F
 import argparse
-from metrics import precision, auc_score, recall
+
+from metrics import accuracy, precision, auc_score, recall
 from dataset import *
-from ParaCPI import MGraphDTA
-# from model3_baseline import MGraphDTA
+from model3 import MGraphDTA
 from utils import *
 from log.train_logger import TrainLogger
-from preprocess.preprocessing_celegans import *
+
 def getROCE(predList,targetList,roceRate):
     p = sum(targetList)
     n = len(targetList) - p
@@ -62,28 +63,27 @@ def val(model, criterion, dataloader, device):
     pred_cls = np.concatenate(pred_cls_list, axis=0)
     label = np.concatenate(label_list, axis=0)
 
-
-    pre = round(precision(label, pred_cls), 3)
-    rec = round(recall(label, pred_cls), 3)
-    auc = round(auc_score(label, pred), 3)
-
-    # pre = precision(label, pred_cls)
-    # rec = recall(label, pred_cls)
-    # auc = auc_score(label, pred)
-
+    acc = accuracy(label, pred_cls)
+    pre = precision(label, pred_cls)
+    rec = recall(label, pred_cls)
+    auc = auc_score(label, pred)
+    roce1 = round(getROCE(pred_cls, label, 0.5), 2)
+    roce2 = round(getROCE(pred_cls, label,  1), 2)
+    roce3 = round(getROCE(pred_cls, label,  2), 2)
+    roce4 = round(getROCE(pred_cls, label,  5), 2)
 
     epoch_loss = running_loss.get_average()
     running_loss.reset()
 
     model.train()
 
-    return epoch_loss, pre, rec, auc
+    return epoch_loss, acc, pre, rec, auc,roce1,roce2,roce3,roce4
 
 def main():
     parser = argparse.ArgumentParser()
 
     # Add argument BindingDB
-    parser.add_argument('--dataset', default='human', help='GPCR or Kinase') #required=True,
+    parser.add_argument('--dataset', default='DUDE', help='human or celegans') #required=True,
     parser.add_argument('--save_model', default='True', help='whether save model or not')
     parser.add_argument('--lr', type=float, default=5e-4, help='learning rate')
     parser.add_argument('--batch_size', type=int, default=512, help='batch_size')
@@ -105,7 +105,7 @@ def main():
     save_model = params.get("save_model")
     data_root = params.get("data_root")
     fpath = os.path.join(data_root, DATASET)
-    GNNDataset(root=fpath)
+
     train_set = GNNDataset(fpath, types='train')
     test_set = GNNDataset(fpath, types='test')
 
@@ -125,6 +125,7 @@ def main():
 
     optimizer = optim.Adam(model.parameters(), lr=params['lr'])
     criterion = nn.CrossEntropyLoss()
+
     global_step = 0
     global_epoch = 0
 
@@ -151,18 +152,14 @@ def main():
 
                 epoch_loss = running_loss.get_average()
                 running_loss.reset()
+                test_loss, test_acc, test_pre, test_rec, test_auc,roce1,roce2,roce3,roce4 = val(model, criterion, test_loader, device)
 
-                test_loss, test_pre, test_rec, test_auc= val(model, criterion, test_loader, device)
-
-                msg = "epoch-%d, loss-%.3f, test_pre-%.3f, test_rec-%.3f, test_auc-%.3f" % (global_epoch, test_loss,test_pre, test_rec, test_auc)
+                msg = "epoch-%d, loss-%.3f, test_acc-%.3f, test_pre-%.3f, test_rec-%.3f, test_auc-%.3f, roce1-%.3f, roce2-%.3f, roce3-%.3f, roce4-%.3f" % (global_epoch, test_loss, test_acc, test_pre, test_rec, test_auc,roce1,roce2,roce3,roce4)
                 logger.info(msg)
 
-                if save_model:
+                if save_model and test_auc >=0.994 and roce1 > 80:
                     save_model_dict(model, logger.get_model_dir(), msg)
-                # if i >= num_iter-2:
-                #     save_model_dict(model, logger.get_model_dir(), msg)
 
 
 if __name__ == "__main__":
-    
     main()

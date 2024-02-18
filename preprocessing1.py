@@ -30,6 +30,29 @@ Datasets are from https://github.com/masashitsubaki/CPI_prediction
 '''
 
 
+def data_split_train_val_test(data_root='data', data_set='human'):
+    data_path = osp.join(data_root, data_set, 'raw', 'data.csv')
+    data_df = pd.read_csv(data_path)
+
+    # Split data in train:val:test = 8:1:1 with the same random seed as previous study.
+    # Please see https://github.com/masashitsubaki/CPI_prediction
+    data_shuffle = data_df.sample(frac=1., random_state=1234)
+    train_split_idx = int(len(data_shuffle) * 0.8)
+    df_train = data_shuffle[:train_split_idx]
+    df_val_test = data_shuffle[train_split_idx:]
+    val_split_idx = int(len(df_val_test) * 0.5)
+    df_val = df_val_test[:val_split_idx]
+    df_test = df_val_test[val_split_idx:]
+
+    df_train.to_csv(osp.join(data_root, data_set, 'raw', 'data_train.csv'), index=False)
+    df_val.to_csv(osp.join(data_root, data_set, 'raw', 'data_val.csv'), index=False)
+    df_test.to_csv(osp.join(data_root, data_set, 'raw', 'data_test.csv'), index=False)
+
+    print(f"{data_set} split done!")
+    print("Number of data: ", len(data_df))
+    print("Number of train: ", len(df_train))
+    print("Number of val: ", len(df_val))
+    print("Number of test: ", len(df_test))
 
 
 '''
@@ -94,8 +117,8 @@ def adj2index(edge_index):
                                              adj.shape[1], coalesced=True)
     edge_index_quin, _ = torch_sparse.spspmm(edge_index_quad, None, edge_index, None, adj.shape[1], adj.shape[1],
                                              adj.shape[1], coalesced=True)
-    A = index2adj(edge_index_quin) + index2adj(edge_index_quad)
-    # A = index2adj(edge_index)
+    A = index2adj(edge_index_quad) + index2adj(edge_index_quin)
+    # A = index2adj(edge_index_cube)
 
     A = [[1. if x != 0. else 0. for x in row] for row in A]
     # 邻接矩阵A
@@ -116,11 +139,10 @@ def adj2index(edge_index):
     for e1, e2 in g.edges:
         edge_index.append([e1, e2])
     return edge_index
-a = []
+
 def mol_to_graph(mol):
     features = []
     for atom in mol.GetAtoms():
-        a.append(atom.GetSymbol())
         feature = atom_features(atom)
         features.append(feature / np.sum(feature))
 
@@ -158,16 +180,18 @@ class GNNDataset(InMemoryDataset):
         super().__init__(root, transform, pre_transform, pre_filter)
         if types == 'train':
             self.data, self.slices = torch.load(self.processed_paths[0])
-        elif types == 'test':
+        elif types == 'val':
             self.data, self.slices = torch.load(self.processed_paths[1])
+        elif types == 'test':
+            self.data, self.slices = torch.load(self.processed_paths[2])
 
     @property
     def raw_file_names(self):
-        return ['data_train.csv', 'data_test.csv']
+        return ['data_train.csv', 'data_val.csv', 'data_test.csv']
 
     @property
     def processed_file_names(self):
-        return ['processed_data_train.pt','processed_data_test.pt']
+        return ['processed_data_train.pt', 'processed_data_val.pt', 'processed_data_test.pt']
 
     def download(self):
         # Download to `self.raw_dir`.
@@ -203,7 +227,7 @@ class GNNDataset(InMemoryDataset):
             data = DATA.Data(
                 x=torch.FloatTensor(x),
                 edge_index=torch.LongTensor(edge_index).transpose(1, 0),
-                y=torch.FloatTensor([int(label)]),
+                y=torch.FloatTensor([label]),
                 target=torch.LongTensor([target])
             )
 
@@ -217,8 +241,9 @@ class GNNDataset(InMemoryDataset):
 
     def process(self):
         df_train = pd.read_csv(self.raw_paths[0])
-        df_test = pd.read_csv(self.raw_paths[1])
-        df = pd.concat([df_train,df_test])
+        df_val = pd.read_csv(self.raw_paths[1])
+        df_test = pd.read_csv(self.raw_paths[2])
+        df = pd.concat([df_train, df_val, df_test])
         smiles = df['compound_iso_smiles'].unique()
 
         graph_dict = dict()
@@ -230,14 +255,17 @@ class GNNDataset(InMemoryDataset):
             graph_dict[smile] = mol_to_graph(mol)
 
         train_list = self.process_data(self.raw_paths[0], graph_dict)
-        test_list = self.process_data(self.raw_paths[1], graph_dict)
+        val_list = self.process_data(self.raw_paths[1], graph_dict)
+        test_list = self.process_data(self.raw_paths[2], graph_dict)
 
         if self.pre_filter is not None:
             train_list = [train for train in train_list if self.pre_filter(train)]
+            val_list = [val for val in val_list if self.pre_filter(val)]
             test_list = [test for test in test_list if self.pre_filter(test)]
 
         if self.pre_transform is not None:
             train_list = [self.pre_transform(train) for train in train_list]
+            val_list = [self.pre_transform(val) for val in val_list]
             test_list = [self.pre_transform(test) for test in test_list]
 
         print('Graph construction done. Saving to file.')
@@ -246,16 +274,21 @@ class GNNDataset(InMemoryDataset):
         data, slices = self.collate(train_list)
         torch.save((data, slices), self.processed_paths[0])
 
+        # save preprocessed val data:
+        data, slices = self.collate(val_list)
+        torch.save((data, slices), self.processed_paths[1])
 
         # save preprocessed test data:
         data, slices = self.collate(test_list)
-        torch.save((data, slices), self.processed_paths[1])
+        torch.save((data, slices), self.processed_paths[2])
 
 
 if __name__ == "__main__":
-
-    GNNDataset(root='data/human')
-    print(list(set(a)))
-
+    # data_split_train_val_test(data_root='data', data_set='human')
+    data_split_train_val_test(data_root='data', data_set='DUDE')
+    # GNNDataset(root='data/human')
+    # GNNDataset(root='data/celegans')
+    # GNNDataset(root='data/BindingDB')
+    GNNDataset(root='data/DUDE')
 
 

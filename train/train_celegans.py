@@ -10,7 +10,7 @@ import torch.nn.functional as F
 import argparse
 from metrics import precision, auc_score, recall
 from dataset import *
-from model3 import MGraphDTA
+from ParaCPI import MGraphDTA
 # from model3_baseline import MGraphDTA
 from utils import *
 from log.train_logger import TrainLogger
