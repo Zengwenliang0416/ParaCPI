@@ -10,7 +10,7 @@ from torch import Tensor
 from collections import OrderedDict
 
 '''
-使用A4+A5
+使用A1即可
 '''
 
 
