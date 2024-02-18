@@ -170,51 +170,25 @@ class GraphDenseNet(nn.Module):
     def __init__(self, epochs, steps_per_epoch,n,num_input_features, out_dim):
         super().__init__()
         self.dropout_late = math.ceil((epochs * steps_per_epoch) / n)
-        self.convs = nn.ModuleList([gnn.GraphConv(num_input_features, num_input_features) for _ in range(4)])
-        self.gcn = gnn.GraphConv(num_input_features, out_dim)
+        self.convs = nn.ModuleList([gnn.GraphConv(num_input_features, out_dim) for _ in range(5)])
         self.norm = NodeLevelBatchNorm(out_dim)
         self.dropout = nn.Dropout(0.2)
         self.classifer = nn.Linear(out_dim, 96)
 
     def forward(self, data,i):
         x, edge_index, batch = data.x, data.edge_index, data.batch
-        for conv in self.convs:
-            x = conv(x,edge_index)
-        x = self.gcn(x,edge_index)
+        x = sum([conv(x, edge_index) for conv in self.convs])
         x = self.norm(x)
         x = gnn.global_max_pool(x, data.batch)
         x = F.relu(x)
-        x = self.dropout(x)
-        x = self.classifer(x)
-
+        if i >= (self.dropout_late)//2:
+            x = self.dropout(x)
+            x = self.classifer(x)
+        else:
+            x = self.classifer(x)
 
         return x
 
-
-class ProteinTransformerEncoder(nn.Module):
-    def __init__(self, embedding_num, out_dim, num_layers=6, num_heads=8):
-        super().__init__()
-        self.embedding_num = embedding_num
-        self.transformer = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(embedding_num, num_heads), num_layers)
-        self.linear = nn.Linear(embedding_num, out_dim)
-        self.embedding = nn.Embedding(26, embedding_num)
-
-
-
-    def forward(self, protein_features):
-        # 将蛋白质序列特征嵌入到[batch_size, protein_len, embedding_num]的向量空间中
-        # embeddings = self.embedding(protein_features)
-        embeddings = self.embedding(protein_features)
-
-        # 将嵌入向量输入Transformer编码器
-        encoded = self.transformer(embeddings)
-
-        # 获取编码后的向量，并转换为[batch_size,out_dim]的向量空间
-        encoded = encoded.mean(dim=1)
-        encoded = self.linear(encoded)
-
-        return encoded
 class TargetRepresentation(nn.Module):
     def __init__(self, block_num, vocab_size, embedding_num):
         super().__init__()

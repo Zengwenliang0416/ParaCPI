@@ -170,24 +170,22 @@ class GraphDenseNet(nn.Module):
     def __init__(self, epochs, steps_per_epoch,n,num_input_features, out_dim):
         super().__init__()
         self.dropout_late = math.ceil((epochs * steps_per_epoch) / n)
-        self.convs = nn.ModuleList([gnn.GraphConv(num_input_features, out_dim) for _ in range(5)])
+        self.convs = nn.ModuleList([gnn.GraphConv(num_input_features, num_input_features) for _ in range(4)])
+        self.gcn = gnn.GraphConv(num_input_features, out_dim)
         self.norm = NodeLevelBatchNorm(out_dim)
         self.dropout = nn.Dropout(0.2)
         self.classifer = nn.Linear(out_dim, 96)
 
     def forward(self, data,i):
         x, edge_index, batch = data.x, data.edge_index, data.batch
-        x = sum([conv(x, edge_index) for conv in self.convs])
+        for conv in self.convs:
+            x = conv(x,edge_index)
+        x = self.gcn(x,edge_index)
         x = self.norm(x)
         x = gnn.global_max_pool(x, data.batch)
         x = F.relu(x)
-        if i >= (self.dropout_late)//2:
-            x = self.dropout(x)
-            x = self.classifer(x)
-        else:
-            x = self.classifer(x)
-
-        return x
+        x = self.dropout(x)
+        x = self.classifer(x)
 
 
         return x
