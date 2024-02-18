@@ -184,11 +184,8 @@ class GraphDenseNet(nn.Module):
         x = self.norm(x)
         x = gnn.global_max_pool(x, data.batch)
         x = F.relu(x)
-        if i >= (self.dropout_late)//2:
-            x = self.dropout(x)
-            x = self.classifer(x)
-        else:
-            x = self.classifer(x)
+        x = self.dropout(x)
+        x = self.classifer(x)
         return x
 
 class ProteinTransformerEncoder(nn.Module):
@@ -273,10 +270,7 @@ class MGraphDTA(nn.Module):
         ligand_x = self.ligand_encoder(data,i)
 
         x = torch.cat([protein_x, ligand_x], dim=-1)
-        if i >= (self.dropout_late) // 2:
-            x = self.classifier(x)
-        else:
-            x = self.classifier(x)
+        x = self.classifier1(x)
 
         return x
 
