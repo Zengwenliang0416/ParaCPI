@@ -1,36 +1,29 @@
-import csv
-import random
+import os
+import pandas as pd
+from sklearn.model_selection import KFold
 
-# 读取CSV文件
-with open('data_train.csv', 'r') as f:
-    reader = csv.reader(f)
-    data = list(reader)
+# Load the dataset
+data = pd.read_csv('data_train.csv')
 
-# 打乱数据顺序
-random.seed(443)
-random.shuffle(data)
+# Prepare 5-fold cross-validation
+n_splits = 5
+random_states = [42, 52, 62]
 
-# 将数据分成五个折
-num_folds = 5
-fold_size = len(data) // num_folds
-folds = []
-for i in range(num_folds):
-    fold = data[i*fold_size : (i+1)*fold_size]
-    folds.append(fold)
-fields = ['compound_iso_smiles', 'target_sequence','affinity']
-# 生成训练集和测试集
-for i in range(num_folds):
-    test_data = folds[i]
-    train_data = []
-    for j in range(num_folds):
-        if j != i:
-            train_data += folds[j]
-    # 将训练集和测试集存储为CSV文件
-    with open(f'data_train{i+1}.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(fields)
-        writer.writerows(train_data)
-    with open(f'data_test{i+1}.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(fields)
-        writer.writerows(test_data)
+for state in random_states:
+    kf = KFold(n_splits=n_splits, shuffle=True, random_state=state)
+
+    # Loop over each fold
+    for fold_number, (train_index, test_index) in enumerate(kf.split(data), start=1):
+        # Create directory name for the fold, including the random_state
+        fold_dir = os.path.join(str(state), f'fold_{fold_number}')
+        os.makedirs(fold_dir, exist_ok=True)  # Create directory if it does not exist
+
+        # Split the dataset into training and testing sets
+        train_data = data.iloc[train_index]
+        test_data = data.iloc[test_index]
+
+        # Save the training and testing sets as CSV files
+        train_data.to_csv(os.path.join(fold_dir, 'data_train.csv'), index=False)
+        test_data.to_csv(os.path.join(fold_dir, 'data_val.csv'), index=False)
+
+print("The datasets for 5-fold cross-validation have been split and saved in respective folders by random state.")
