@@ -259,7 +259,7 @@ class TargetRepresentation(nn.Module):
         x = self.linear(x)
 
         return x
-class MGraphDTA(nn.Module):
+class CPINE(nn.Module):
     def __init__(self, epochs, steps_per_epoch,n,filter_num=32, out_dim=2, drop_rate = 0.2):
         super().__init__()
         embedding_num = 64

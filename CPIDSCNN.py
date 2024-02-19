@@ -10,7 +10,7 @@ from torch import Tensor
 from collections import OrderedDict
 
 '''
-使用A4+A5
+MGraphDTA: Deep Multiscale Graph Neural Network for Explainable Drug-target binding affinity Prediction
 '''
 
 
@@ -165,28 +165,28 @@ class DenseBlock(nn.ModuleDict):
 
         return data
 
+
 class GraphDenseNet(nn.Module):
     def __init__(self, epochs, steps_per_epoch,n,num_input_features, out_dim):
         super().__init__()
         self.dropout_late = math.ceil((epochs * steps_per_epoch) / n)
-        self.convs = nn.ModuleList([gnn.GraphConv(num_input_features, num_input_features) for _ in range(4)])
-        self.gcn = gnn.GraphConv(num_input_features, out_dim)
+        self.convs = nn.ModuleList([gnn.GraphConv(num_input_features, out_dim) for _ in range(5)])
         self.norm = NodeLevelBatchNorm(out_dim)
         self.dropout = nn.Dropout(0.2)
         self.classifer = nn.Linear(out_dim, 96)
 
     def forward(self, data,i):
         x, edge_index, batch = data.x, data.edge_index, data.batch
-        for conv in self.convs:
-            x = conv(x,edge_index)
-            x = F.relu(x)
-        x = self.gcn(x,edge_index)
+        x = sum([conv(x, edge_index) for conv in self.convs])
         x = self.norm(x)
         x = gnn.global_max_pool(x, data.batch)
         x = F.relu(x)
         x = self.dropout(x)
         x = self.classifer(x)
+
+
         return x
+
 
 class ProteinTransformerEncoder(nn.Module):
     def __init__(self, embedding_num, out_dim, num_layers=6, num_heads=8):
@@ -219,7 +219,7 @@ class TargetRepresentation(nn.Module):
         self.block_list = nn.ModuleList()
         for block_idx in range(block_num):
             self.block_list.append(
-                StackCNN(block_idx + 1, embedding_num, 96, 3)
+                StackCNN(6, embedding_num, 96, 3)
             )
 
         self.linear = nn.Linear(block_num * 96, 96)
@@ -231,14 +231,14 @@ class TargetRepresentation(nn.Module):
         x = self.linear(x)
 
         return x
-class MGraphDTA(nn.Module):
+class CPIDSCNN(nn.Module):
     def __init__(self, epochs, steps_per_epoch,n,filter_num=32, out_dim=2, drop_rate = 0.2):
         super().__init__()
         embedding_num = 64
         hid_dim = 96
         protein_len = 1200
         self.dropout_late = math.ceil((epochs * steps_per_epoch) / n)
-        self.protein_encoder = TargetRepresentation(block_num=3, vocab_size=25 + 1, embedding_num=128)
+        self.protein_encoder = TargetRepresentation(block_num=1, vocab_size=25 + 1, embedding_num=128)
 
         self.ligand_encoder = GraphDenseNet(epochs, steps_per_epoch,n,num_input_features=87, out_dim=228)
 
@@ -251,18 +251,7 @@ class MGraphDTA(nn.Module):
             nn.ReLU(),
             nn.Linear(256, out_dim)
         )
-        self.classifier1 = nn.Sequential(
-            nn.Linear(324, 1024),
-            nn.ReLU(),
-            nn.Dropout(drop_rate),
-            nn.Linear(1024, 1024),
-            nn.ReLU(),
-            nn.Dropout(drop_rate),
-            nn.Linear(1024, 256),
-            nn.ReLU(),
-            nn.Dropout(drop_rate),
-            nn.Linear(256, out_dim)
-        )
+
 
     def forward(self, data,i=0):
         target = data.target
@@ -270,8 +259,7 @@ class MGraphDTA(nn.Module):
         ligand_x = self.ligand_encoder(data,i)
 
         x = torch.cat([protein_x, ligand_x], dim=-1)
-        x = self.classifier1(x)
+
+        x = self.classifier(x)
 
         return x
-
-

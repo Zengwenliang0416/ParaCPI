@@ -11,7 +11,11 @@ from sklearn.metrics import precision_recall_curve, auc, f1_score, matthews_corr
 import argparse
 from metrics import precision, auc_score, recall
 from dataset import *
-from ParaCPI import MGraphDTA
+from ParaCPI import ParaCPI
+from CPIDSCNN import CPIDSCNN
+from CPIGRB import CPIGRB
+from CPIParaGNN import CPIParaGNN
+from CPINE import CPINE
 from utils import *
 from log.train_logger import TrainLogger
 from preprocess.preprocessing_celegans import *
@@ -89,6 +93,7 @@ def val(model, criterion, dataloader, device):
 
 def main():
     parser = argparse.ArgumentParser()
+    # 对比实验
     # python --dataset human/raw/42/fold_1
     # python --dataset human/raw/42/fold_2
     # python --dataset human/raw/42/fold_3
@@ -106,6 +111,27 @@ def main():
     # python --dataset human/raw/62/fold_3
     # python --dataset human/raw/62/fold_4
     # python --dataset human/raw/62/fold_5
+
+    #消融实验
+    # python --dataset human/raw/42/fold_1 --model CPIDSCNN
+    # python --dataset human/raw/42/fold_2 --model CPIDSCNN
+    # python --dataset human/raw/42/fold_3 --model CPIDSCNN
+    # python --dataset human/raw/42/fold_4 --model CPIDSCNN
+    # python --dataset human/raw/42/fold_5 --model CPIDSCNN
+
+    # python --dataset human/raw/52/fold_1 --model CPIGRB
+    # python --dataset human/raw/52/fold_2 --model CPIGRB
+    # python --dataset human/raw/52/fold_3 --model CPIGRB
+    # python --dataset human/raw/52/fold_4 --model CPIGRB
+    # python --dataset human/raw/52/fold_5 --model CPIGRB
+
+    # python --dataset human/raw/62/fold_1 --model CPIParaGNN
+    # python --dataset human/raw/62/fold_2 --model CPIParaGNN
+    # python --dataset human/raw/62/fold_3 --model CPIParaGNN
+    # python --dataset human/raw/62/fold_4 --model CPIParaGNN
+    # python --dataset human/raw/62/fold_5 --model CPIParaGNN
+
+    parser.add_argument('--model', default='ParaCPI', help='GPCR or Kinase')  # required=True,
     parser.add_argument('--dataset', default='human/raw/42/fold_1', help='GPCR or Kinase')  # required=True,
     parser.add_argument('--save_model', default='True', help='whether save model or not')
     parser.add_argument('--lr', type=float, default=5e-4, help='learning rate')
@@ -136,7 +162,16 @@ def main():
     epochs = 100
     steps_per_epoch = 10
     n = len(train_loader)
-    model = MGraphDTA(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
+    if(args.dataset == "ParaCPI"):
+        model = ParaCPI(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
+    elif(args.dataset == "CPINE"):
+        model = CPINE(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
+    elif(args.dataset == "CPIDSCNN"):
+        model = CPIDSCNN(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
+    elif(args.dataset == "CPIGRB"):
+        model = CPIGRB(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
+    elif (args.dataset == "CPIParaGNN"):
+        model = CPIParaGNN(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
 
     num_iter = math.ceil((epochs * steps_per_epoch) / len(train_loader))
 
