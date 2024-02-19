@@ -94,42 +94,42 @@ def val(model, criterion, dataloader, device):
 def main():
     parser = argparse.ArgumentParser()
     # 对比实验
-    # python --dataset human/raw/42/fold_1
-    # python --dataset human/raw/42/fold_2
-    # python --dataset human/raw/42/fold_3
-    # python --dataset human/raw/42/fold_4
-    # python --dataset human/raw/42/fold_5
+    # python train_human.py --dataset human/raw/42/fold_1
+    # python train_human.py --dataset human/raw/42/fold_2
+    # python train_human.py --dataset human/raw/42/fold_3
+    # python train_human.py --dataset human/raw/42/fold_4
+    # python train_human.py --dataset human/raw/42/fold_5
 
-    # python --dataset human/raw/52/fold_1
-    # python --dataset human/raw/52/fold_2
-    # python --dataset human/raw/52/fold_3
-    # python --dataset human/raw/52/fold_4
-    # python --dataset human/raw/52/fold_5
+    # python train_human.py --dataset human/raw/52/fold_1
+    # python train_human.py --dataset human/raw/52/fold_2
+    # python train_human.py --dataset human/raw/52/fold_3
+    # python train_human.py --dataset human/raw/52/fold_4
+    # python train_human.py --dataset human/raw/52/fold_5
 
-    # python --dataset human/raw/62/fold_1
-    # python --dataset human/raw/62/fold_2
-    # python --dataset human/raw/62/fold_3
-    # python --dataset human/raw/62/fold_4
-    # python --dataset human/raw/62/fold_5
+    # python train_human.py --dataset human/raw/62/fold_1
+    # python train_human.py --dataset human/raw/62/fold_2
+    # python train_human.py --dataset human/raw/62/fold_3
+    # python train_human.py --dataset human/raw/62/fold_4
+    # python train_human.py --dataset human/raw/62/fold_5
 
     #消融实验
-    # python --dataset human/raw/42/fold_1 --model CPIDSCNN
-    # python --dataset human/raw/42/fold_2 --model CPIDSCNN
-    # python --dataset human/raw/42/fold_3 --model CPIDSCNN
-    # python --dataset human/raw/42/fold_4 --model CPIDSCNN
-    # python --dataset human/raw/42/fold_5 --model CPIDSCNN
+    # python train_human.py --dataset human/raw/42/fold_1 --model CPIDSCNN
+    # python train_human.py --dataset human/raw/42/fold_2 --model CPIDSCNN
+    # python train_human.py --dataset human/raw/42/fold_3 --model CPIDSCNN
+    # python train_human.py --dataset human/raw/42/fold_4 --model CPIDSCNN
+    # python train_human.py --dataset human/raw/42/fold_5 --model CPIDSCNN
 
-    # python --dataset human/raw/52/fold_1 --model CPIGRB
-    # python --dataset human/raw/52/fold_2 --model CPIGRB
-    # python --dataset human/raw/52/fold_3 --model CPIGRB
-    # python --dataset human/raw/52/fold_4 --model CPIGRB
-    # python --dataset human/raw/52/fold_5 --model CPIGRB
+    # python train_human.py --dataset human/raw/52/fold_1 --model CPIGRB
+    # python train_human.py --dataset human/raw/52/fold_2 --model CPIGRB
+    # python train_human.py --dataset human/raw/52/fold_3 --model CPIGRB
+    # python train_human.py --dataset human/raw/52/fold_4 --model CPIGRB
+    # python train_human.py --dataset human/raw/52/fold_5 --model CPIGRB
 
-    # python --dataset human/raw/62/fold_1 --model CPIParaGNN
-    # python --dataset human/raw/62/fold_2 --model CPIParaGNN
-    # python --dataset human/raw/62/fold_3 --model CPIParaGNN
-    # python --dataset human/raw/62/fold_4 --model CPIParaGNN
-    # python --dataset human/raw/62/fold_5 --model CPIParaGNN
+    # python train_human.py --dataset human/raw/62/fold_1 --model CPIParaGNN
+    # python train_human.py --dataset human/raw/62/fold_2 --model CPIParaGNN
+    # python train_human.py --dataset human/raw/62/fold_3 --model CPIParaGNN
+    # python train_human.py --dataset human/raw/62/fold_4 --model CPIParaGNN
+    # python train_human.py --dataset human/raw/62/fold_5 --model CPIParaGNN
 
     parser.add_argument('--model', default='ParaCPI', help='GPCR or Kinase')  # required=True,
     parser.add_argument('--dataset', default='human/raw/42/fold_1', help='GPCR or Kinase')  # required=True,

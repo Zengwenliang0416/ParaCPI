@@ -1,4 +1,3 @@
-# %%
 import os
 
 os.environ['CUDA_VISIBLE_DEVICES'] = "0"
@@ -93,43 +92,43 @@ def val(model, criterion, dataloader, device):
 
 def main():
     parser = argparse.ArgumentParser()
-    # python --dataset celegans/raw/42/fold_1
-    # python --dataset celegans/raw/42/fold_2
-    # python --dataset celegans/raw/42/fold_3
-    # python --dataset celegans/raw/42/fold_4
-    # python --dataset celegans/raw/42/fold_5
+    # python train_celegans.py --dataset celegans/raw/42/fold_1
+    # python train_celegans.py --dataset celegans/raw/42/fold_2
+    # python train_celegans.py --dataset celegans/raw/42/fold_3
+    # python train_celegans.py --dataset celegans/raw/42/fold_4
+    # python train_celegans.py --dataset celegans/raw/42/fold_5
 
-    # python --dataset celegans/raw/52/fold_1
-    # python --dataset celegans/raw/52/fold_2
-    # python --dataset celegans/raw/52/fold_3
-    # python --dataset celegans/raw/52/fold_4
-    # python --dataset celegans/raw/52/fold_5
+    # python train_celegans.py --dataset celegans/raw/52/fold_1
+    # python train_celegans.py --dataset celegans/raw/52/fold_2
+    # python train_celegans.py --dataset celegans/raw/52/fold_3
+    # python train_celegans.py --dataset celegans/raw/52/fold_4
+    # python train_celegans.py --dataset celegans/raw/52/fold_5
 
-    # python --dataset celegans/raw/62/fold_1
-    # python --dataset celegans/raw/62/fold_2
-    # python --dataset celegans/raw/62/fold_3
-    # python --dataset celegans/raw/62/fold_4
-    # python --dataset celegans/raw/62/fold_5
+    # python train_celegans.py --dataset celegans/raw/62/fold_1
+    # python train_celegans.py --dataset celegans/raw/62/fold_2
+    # python train_celegans.py --dataset celegans/raw/62/fold_3
+    # python train_celegans.py --dataset celegans/raw/62/fold_4
+    # python train_celegans.py --dataset celegans/raw/62/fold_5
 
     #消融实验
-    # python --dataset celegans/raw/42/fold_1 --model CPIDSCNN
-    # python --dataset celegans/raw/42/fold_2 --model CPIDSCNN
-    # python --dataset celegans/raw/42/fold_3 --model CPIDSCNN
-    # python --dataset celegans/raw/42/fold_4 --model CPIDSCNN
-    # python --dataset celegans/raw/42/fold_5 --model CPIDSCNN
+    # python train_celegans.py --dataset celegans/raw/42/fold_1 --model CPIDSCNN
+    # python train_celegans.py --dataset celegans/raw/42/fold_2 --model CPIDSCNN
+    # python train_celegans.py --dataset celegans/raw/42/fold_3 --model CPIDSCNN
+    # python train_celegans.py --dataset celegans/raw/42/fold_4 --model CPIDSCNN
+    # python train_celegans.py --dataset celegans/raw/42/fold_5 --model CPIDSCNN
 
-    # python --dataset celegans/raw/52/fold_1 --model CPIGRB
-    # python --dataset celegans/raw/52/fold_2 --model CPIGRB
-    # python --dataset celegans/raw/52/fold_3 --model CPIGRB
-    # python --dataset celegans/raw/52/fold_4 --model CPIGRB
-    # python --dataset celegans/raw/52/fold_5 --model CPIGRB
+    # python train_celegans.py --dataset celegans/raw/52/fold_1 --model CPIGRB
+    # python train_celegans.py --dataset celegans/raw/52/fold_2 --model CPIGRB
+    # python train_celegans.py --dataset celegans/raw/52/fold_3 --model CPIGRB
+    # python train_celegans.py --dataset celegans/raw/52/fold_4 --model CPIGRB
+    # python train_celegans.py --dataset celegans/raw/52/fold_5 --model CPIGRB
 
-    # python --dataset celegans/raw/62/fold_1 --model CPIParaGNN
-    # python --dataset celegans/raw/62/fold_2 --model CPIParaGNN
-    # python --dataset celegans/raw/62/fold_3 --model CPIParaGNN
-    # python --dataset celegans/raw/62/fold_4 --model CPIParaGNN
-    # python --dataset celegans/raw/62/fold_5 --model CPIParaGNN
-    
+    # python train_celegans.py --dataset celegans/raw/62/fold_1 --model CPIParaGNN
+    # python train_celegans.py --dataset celegans/raw/62/fold_2 --model CPIParaGNN
+    # python train_celegans.py --dataset celegans/raw/62/fold_3 --model CPIParaGNN
+    # python train_celegans.py --dataset celegans/raw/62/fold_4 --model CPIParaGNN
+    # python train_celegans.py --dataset celegans/raw/62/fold_5 --model CPIParaGNN
+
     parser.add_argument('--model', default='ParaCPI', help='GPCR or Kinase')  # required=True,
     parser.add_argument('--dataset', default='celegans/raw/42/fold_1', help='GPCR or Kinase')  # required=True,
     parser.add_argument('--save_model', default='True', help='whether save model or not')
