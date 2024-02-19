@@ -1,38 +1,41 @@
 # %%
 import os
+
 os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 import math
-import numpy as np
 import torch.optim as optim
-import torch
 import torch.nn as nn
 from torch_geometric.data import DataLoader
 import torch.nn.functional as F
+from sklearn.metrics import precision_recall_curve, auc, f1_score, matthews_corrcoef
 import argparse
-from sklearn.metrics import average_precision_score
-from metrics import accuracy, precision, auc_score, recall
+from metrics import precision, auc_score, recall
 from dataset import *
 from ParaCPI import MGraphDTA
 from utils import *
 from log.train_logger import TrainLogger
+from preprocess.preprocessing_celegans import *
 
-def getROCE(predList,targetList,roceRate):
+
+def getROCE(predList, targetList, roceRate):
     p = sum(targetList)
     n = len(targetList) - p
-    predList = [[index,x] for index,x in enumerate(predList)]
-    predList = sorted(predList,key = lambda x:x[1],reverse = True)
+    predList = [[index, x] for index, x in enumerate(predList)]
+    predList = sorted(predList, key=lambda x: x[1], reverse=True)
     tp1 = 0
     fp1 = 0
-    #maxIndexs = []
+    # maxIndexs = []
     for x in predList:
-        if(targetList[x[0]] == 1):
+        if (targetList[x[0]] == 1):
             tp1 += 1
         else:
             fp1 += 1
-            if(fp1>((roceRate*n)/100)):
+            if (fp1 > ((roceRate * n) / 100)):
                 break
-    roce = (tp1*n)/(p*fp1)
+    roce = (tp1 * n) / (p * fp1)
     return roce
+
+
 def val(model, criterion, dataloader, device):
     model.eval()
     running_loss = AverageMeter()
@@ -63,41 +66,54 @@ def val(model, criterion, dataloader, device):
     pred_cls = np.concatenate(pred_cls_list, axis=0)
     label = np.concatenate(label_list, axis=0)
 
-
+    precision1, reacall1, r = precision_recall_curve(label, pred_cls)
+    aupr = round(auc(reacall1, precision1), 3)
+    # Calculate MCC and F1
+    mcc = round(matthews_corrcoef(label, pred_cls), 3)
+    f1 = round(f1_score(label, pred_cls), 3)
     pre = round(precision(label, pred_cls), 3)
     rec = round(recall(label, pred_cls), 3)
-    auc = round(auc_score(label, pred), 3)
+    Auc = round(auc_score(label, pred), 3)
 
     # pre = precision(label, pred_cls)
     # rec = recall(label, pred_cls)
     # auc = auc_score(label, pred)
-
 
     epoch_loss = running_loss.get_average()
     running_loss.reset()
 
     model.train()
 
-    return epoch_loss, pre, rec, auc
+    return epoch_loss, pre, rec, Auc, aupr, mcc, f1
+
 
 def main():
     parser = argparse.ArgumentParser()
+    # python --dataset celegans/raw/42/fold_1
+    # python --dataset celegans/raw/42/fold_2
+    # python --dataset celegans/raw/42/fold_3
+    # python --dataset celegans/raw/42/fold_4
+    # python --dataset celegans/raw/42/fold_5
 
-    # Add argument BindingDB
-    parser.add_argument('--dataset', default='celegans', help='GPCR or Kinase') #required=True,
+    # python --dataset celegans/raw/52/fold_1
+    # python --dataset celegans/raw/52/fold_2
+    # python --dataset celegans/raw/52/fold_3
+    # python --dataset celegans/raw/52/fold_4
+    # python --dataset celegans/raw/52/fold_5
+
+    # python --dataset celegans/raw/62/fold_1
+    # python --dataset celegans/raw/62/fold_2
+    # python --dataset celegans/raw/62/fold_3
+    # python --dataset celegans/raw/62/fold_4
+    # python --dataset celegans/raw/62/fold_5
+    parser.add_argument('--dataset', default='celegans/raw/42/fold_1', help='GPCR or Kinase')  # required=True,
     parser.add_argument('--save_model', default='True', help='whether save model or not')
     parser.add_argument('--lr', type=float, default=5e-4, help='learning rate')
     parser.add_argument('--batch_size', type=int, default=512, help='batch_size')
     args = parser.parse_args()
 
-    params = dict(
-        data_root="data",
-        save_dir="save",
-        dataset=args.dataset,
-        save_model=args.save_model,
-        lr=args.lr,
-        batch_size=args.batch_size
-    )
+    params = dict(data_root="data", save_dir="save", dataset=args.dataset, save_model=args.save_model, lr=args.lr,
+                  batch_size=args.batch_size)
 
     logger = TrainLogger(params)
     logger.info(__file__)
@@ -106,7 +122,7 @@ def main():
     save_model = params.get("save_model")
     data_root = params.get("data_root")
     fpath = os.path.join(data_root, DATASET)
-
+    GNNDataset(root=fpath)
     train_set = GNNDataset(fpath, types='train')
     test_set = GNNDataset(fpath, types='test')
 
@@ -120,13 +136,12 @@ def main():
     epochs = 100
     steps_per_epoch = 10
     n = len(train_loader)
-    model = MGraphDTA(epochs, steps_per_epoch,n,filter_num=32, out_dim=2).to(device)
+    model = MGraphDTA(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
 
     num_iter = math.ceil((epochs * steps_per_epoch) / len(train_loader))
 
     optimizer = optim.Adam(model.parameters(), lr=params['lr'])
     criterion = nn.CrossEntropyLoss()
-
     global_step = 0
     global_epoch = 0
 
@@ -139,7 +154,7 @@ def main():
             global_step += 1
             data.y = data.y.long()
             data = data.to(device)
-            pred = model(data,i)
+            pred = model(data, i)
             loss = criterion(pred, data.y)
             optimizer.zero_grad()
             loss.backward()
@@ -154,12 +169,13 @@ def main():
                 epoch_loss = running_loss.get_average()
                 running_loss.reset()
 
-                test_loss, test_pre, test_rec, test_auc= val(model, criterion, test_loader, device)
+                test_loss, test_pre, test_rec, test_auc, test_aupr, test_mcc, test_f1 = val(model, criterion, test_loader, device)
 
-                msg = "epoch-%d, loss-%.3f, test_pre-%.3f, test_rec-%.3f, test_auc-%.3f" % (global_epoch, test_loss,test_pre, test_rec, test_auc)
+                msg = "%d_epoch-%d_loss-%.3f_pre-%.3f_rec-%.3f_auc-%.3f_aupr-%.3f_mcc-%.3f_f1-%.3f" % (
+                    params.get("dataset"), global_epoch, test_loss, test_pre, test_rec, test_auc, test_aupr, test_mcc, test_f1)
                 logger.info(msg)
 
-                if save_model and test_auc >=0.995:
+                if save_model and global_epoch > epochs -10:
                     save_model_dict(model, logger.get_model_dir(), msg)
 
 
