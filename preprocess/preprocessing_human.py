@@ -94,7 +94,7 @@ def adj2index(edge_index):
                                              adj.shape[1], coalesced=True)
     edge_index_quin, _ = torch_sparse.spspmm(edge_index_quad, None, edge_index, None, adj.shape[1], adj.shape[1],
                                              adj.shape[1], coalesced=True)
-    A = index2adj(edge_index_quin) + index2adj(edge_index)
+    A = index2adj(edge_index_quin) + index2adj(edge_index_quad)
     # A = index2adj(edge_index)
 
     A = [[1. if x != 0. else 0. for x in row] for row in A]
@@ -254,14 +254,8 @@ class GNNDataset(InMemoryDataset):
 
 if __name__ == "__main__":
 
-    # GNNDataset(root='data/DUDE')
-    # GNNDataset(root='data/DrugBank')
-    
-    # GNNDataset(root='data/celegans')
     GNNDataset(root='data/human')
     print(list(set(a)))
-    # GNNDataset(root='data/Davis')
-
 
 
 

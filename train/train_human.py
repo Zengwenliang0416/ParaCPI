@@ -10,7 +10,7 @@ import torch.nn.functional as F
 import argparse
 from metrics import precision, auc_score, recall
 from dataset import *
-from model3 import MGraphDTA
+from ParaCPI import MGraphDTA
 # from model3_baseline import MGraphDTA
 from utils import *
 from log.train_logger import TrainLogger
@@ -83,7 +83,7 @@ def main():
     parser = argparse.ArgumentParser()
 
     # Add argument BindingDB
-    parser.add_argument('--dataset', default='celegans', help='GPCR or Kinase') #required=True,
+    parser.add_argument('--dataset', default='human', help='GPCR or Kinase') #required=True,
     parser.add_argument('--save_model', default='True', help='whether save model or not')
     parser.add_argument('--lr', type=float, default=5e-4, help='learning rate')
     parser.add_argument('--batch_size', type=int, default=512, help='batch_size')
