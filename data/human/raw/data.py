@@ -15,7 +15,7 @@ for state in random_states:
     # Loop over each fold
     for fold_number, (train_index, test_index) in enumerate(kf.split(data), start=1):
         # Create directory name for the fold, including the random_state
-        fold_dir = os.path.join(str(state), f'fold_{fold_number}')
+        fold_dir = os.path.join(str(state), f'fold_{fold_number}',"raw")
         os.makedirs(fold_dir, exist_ok=True)  # Create directory if it does not exist
 
         # Split the dataset into training and testing sets

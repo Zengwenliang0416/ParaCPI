@@ -170,7 +170,7 @@ class GraphDenseNet(nn.Module):
     def __init__(self, epochs, steps_per_epoch,n,num_input_features, out_dim):
         super().__init__()
         self.dropout_late = math.ceil((epochs * steps_per_epoch) / n)
-        self.convs = nn.ModuleList([gnn.GraphConv(num_input_features, out_dim) for _ in range(3)])
+        self.convs = nn.ModuleList([gnn.GraphConv(num_input_features, out_dim) for _ in range(5)])
         self.norm = NodeLevelBatchNorm(out_dim)
         self.dropout = nn.Dropout(0.2)
         self.classifer = nn.Linear(out_dim, 96)
