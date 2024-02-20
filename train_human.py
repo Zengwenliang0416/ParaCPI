@@ -113,23 +113,23 @@ def main():
     # python train_human.py --dataset human/raw/62/fold_5
 
     # 消融实验
-    # python train_human.py --dataset human/raw/42/fold_1 --model CPIDSCNN
-    # python train_human.py --dataset human/raw/42/fold_2 --model CPIDSCNN
-    # python train_human.py --dataset human/raw/42/fold_3 --model CPIDSCNN
-    # python train_human.py --dataset human/raw/42/fold_4 --model CPIDSCNN
-    # python train_human.py --dataset human/raw/42/fold_5 --model CPIDSCNN
+    # python train_human.py --dataset human/raw/42/fold_1 --modelName CPIDSCNN
+    # python train_human.py --dataset human/raw/42/fold_2 --modelName CPIDSCNN
+    # python train_human.py --dataset human/raw/42/fold_3 --modelName CPIDSCNN
+    # python train_human.py --dataset human/raw/42/fold_4 --modelName CPIDSCNN
+    # python train_human.py --dataset human/raw/42/fold_5 --modelName CPIDSCNN
 
-    # python train_human.py --dataset human/raw/52/fold_1 --model CPIGRB
-    # python train_human.py --dataset human/raw/52/fold_2 --model CPIGRB
-    # python train_human.py --dataset human/raw/52/fold_3 --model CPIGRB
-    # python train_human.py --dataset human/raw/52/fold_4 --model CPIGRB
-    # python train_human.py --dataset human/raw/52/fold_5 --model CPIGRB
+    # python train_human.py --dataset human/raw/52/fold_1 --modelName CPIGRB
+    # python train_human.py --dataset human/raw/52/fold_2 --modelName CPIGRB
+    # python train_human.py --dataset human/raw/52/fold_3 --modelName CPIGRB
+    # python train_human.py --dataset human/raw/52/fold_4 --modelName CPIGRB
+    # python train_human.py --dataset human/raw/52/fold_5 --modelName CPIGRB
 
-    # python train_human.py --dataset human/raw/62/fold_1 --model CPIParaGNN
-    # python train_human.py --dataset human/raw/62/fold_2 --model CPIParaGNN
-    # python train_human.py --dataset human/raw/62/fold_3 --model CPIParaGNN
-    # python train_human.py --dataset human/raw/62/fold_4 --model CPIParaGNN
-    # python train_human.py --dataset human/raw/62/fold_5 --model CPIParaGNN
+    # python train_human.py --dataset human/raw/62/fold_1 --modelName CPIParaGNN
+    # python train_human.py --dataset human/raw/62/fold_2 --modelName CPIParaGNN
+    # python train_human.py --dataset human/raw/62/fold_3 --modelName CPIParaGNN
+    # python train_human.py --dataset human/raw/62/fold_4 --modelName CPIParaGNN
+    # python train_human.py --dataset human/raw/62/fold_5 --modelName CPIParaGNN
 
     parser.add_argument('--modelName', default='ParaCPI', help='GPCR or Kinase')  # required=True,
     parser.add_argument('--model', default='CPIDSCNN', help='GPCR or Kinase')  # required=True,

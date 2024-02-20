@@ -5,7 +5,7 @@ set -e
 
 # Define a function for training a specific dataset fold
 train_fold() {
-    python train_celegans.py --dataset "$1" --model "$2"
+    python train_celegans.py --dataset "$1" --modelName "$2"
 }
 
 # Train all folds for dataset series 42
