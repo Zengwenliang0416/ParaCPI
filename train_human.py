@@ -93,26 +93,26 @@ def val(model, criterion, dataloader, device):
 
 def main():
     parser = argparse.ArgumentParser()
-    # 瀵规瘮瀹為獙
+    # 对比实验
     # python train_human.py --dataset human/raw/42/fold_1
     # python train_human.py --dataset human/raw/42/fold_2
     # python train_human.py --dataset human/raw/42/fold_3
     # python train_human.py --dataset human/raw/42/fold_4
     # python train_human.py --dataset human/raw/42/fold_5
-    #
+
     # python train_human.py --dataset human/raw/52/fold_1
     # python train_human.py --dataset human/raw/52/fold_2
     # python train_human.py --dataset human/raw/52/fold_3
     # python train_human.py --dataset human/raw/52/fold_4
     # python train_human.py --dataset human/raw/52/fold_5
-    #
+
     # python train_human.py --dataset human/raw/62/fold_1
     # python train_human.py --dataset human/raw/62/fold_2
     # python train_human.py --dataset human/raw/62/fold_3
     # python train_human.py --dataset human/raw/62/fold_4
     # python train_human.py --dataset human/raw/62/fold_5
 
-    #娑堣瀺瀹為獙
+    # 消融实验
     # python train_human.py --dataset human/raw/42/fold_1 --model CPIDSCNN
     # python train_human.py --dataset human/raw/42/fold_2 --model CPIDSCNN
     # python train_human.py --dataset human/raw/42/fold_3 --model CPIDSCNN
@@ -131,7 +131,8 @@ def main():
     # python train_human.py --dataset human/raw/62/fold_4 --model CPIParaGNN
     # python train_human.py --dataset human/raw/62/fold_5 --model CPIParaGNN
 
-    parser.add_argument('--model', default='ParaCPI', help='GPCR or Kinase')  # required=True,
+    parser.add_argument('--modelName', default='ParaCPI', help='GPCR or Kinase')  # required=True,
+    parser.add_argument('--model', default='CPIDSCNN', help='GPCR or Kinase')  # required=True,
     parser.add_argument('--dataset', default='human/raw/42/fold_1', help='GPCR or Kinase')  # required=True,
     parser.add_argument('--save_model', default='True', help='whether save model or not')
     parser.add_argument('--lr', type=float, default=5e-4, help='learning rate')
@@ -139,7 +140,7 @@ def main():
     args = parser.parse_args()
 
     params = dict(data_root="data", save_dir="save", dataset=args.dataset, save_model=args.save_model, lr=args.lr,
-                  batch_size=args.batch_size)
+                  batch_size=args.batch_size, modelName=args.modelName)
 
     logger = TrainLogger(params)
     logger.info(__file__)
@@ -162,8 +163,17 @@ def main():
     epochs = 100
     steps_per_epoch = 10
     n = len(train_loader)
-    model = ParaCPI(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
 
+    if (args.modelName == "ParaCPI"):
+        model = ParaCPI(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
+    elif (args.modelName == "CPINE"):
+        model = CPINE(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
+    elif (args.modelName == "CPIDSCNN"):
+        model = CPIDSCNN(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
+    elif (args.modelName == "CPIGRB"):
+        model = CPIGRB(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
+    elif (args.modelName == "CPIParaGNN"):
+        model = CPIParaGNN(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
     num_iter = math.ceil((epochs * steps_per_epoch) / len(train_loader))
 
     optimizer = optim.Adam(model.parameters(), lr=params['lr'])
@@ -195,13 +205,15 @@ def main():
                 epoch_loss = running_loss.get_average()
                 running_loss.reset()
 
-                test_loss, test_pre, test_rec, test_auc, test_aupr, test_mcc, test_f1 = val(model, criterion, test_loader, device)
+                test_loss, test_pre, test_rec, test_auc, test_aupr, test_mcc, test_f1 = val(model, criterion,
+                                                                                            test_loader, device)
 
                 msg = "%s_epoch-%d_loss-%.3f_pre-%.3f_rec-%.3f_auc-%.3f_aupr-%.3f_mcc-%.3f_f1-%.3f" % (
-                    params.get("dataset").replace("/","-"), global_epoch, test_loss, test_pre, test_rec, test_auc, test_aupr, test_mcc, test_f1)
+                    params.get("dataset").replace("/", "-"), global_epoch, test_loss, test_pre, test_rec, test_auc,
+                    test_aupr, test_mcc, test_f1)
                 logger.info(msg)
 
-                if save_model and global_epoch > epochs -10:
+                if save_model and global_epoch > epochs - 10:
                     save_model_dict(model, logger.get_model_dir(), msg)
 
 

@@ -20,7 +20,8 @@ class TrainLogger(BasicLogger):
 
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         if args.get('mark') == None:
-            savetag = timestamp + '_' + args.get('dataset')
+            savetag = args.get('modelName')+ '/'+timestamp + '_' + args.get('dataset')
+            print(savetag)
 
         save_dir = args.get('save_dir')
         if save_dir == None:
