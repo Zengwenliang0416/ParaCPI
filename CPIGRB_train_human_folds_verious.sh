@@ -5,7 +5,7 @@ set -e
 
 # Define a function for training a specific dataset fold
 train_fold() {
-    python train_celegans.py --dataset "$1" --modelName "$2"
+    python train_human.py --dataset "$1" --modelName "$2"
 }
 
 # Function to train all folds for a given dataset series
@@ -13,7 +13,7 @@ train_series() {
     local series="$1"
     local model="$2"
     for fold in {1..5}; do
-        train_fold "celegans/raw/${series}/fold_${fold}" "${model}"
+        train_fold "human/raw/${series}/fold_${fold}" "${model}"
     done
 }
 
@@ -28,4 +28,4 @@ for series in "${dataset_series[@]}"; do
     train_series "${series}" "${modelName}"
 done
 
-echo "Training on all C. elegans dataset folds is complete."
+echo "Training on all human dataset folds is complete."
