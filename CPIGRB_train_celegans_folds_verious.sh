@@ -13,7 +13,7 @@ train_series() {
     local series="$1"
     local model="$2"
     for fold in {1..5}; do
-        train_fold "celegans/raw/${series}/fold_${fold}" "${model}"
+        train_fold "celegans-NE/raw/${series}/fold_${fold}" "${model}"
     done
 }
 
