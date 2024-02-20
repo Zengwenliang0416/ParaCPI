@@ -134,7 +134,7 @@ def main():
     parser.add_argument('--modelName', default='ParaCPI', help='GPCR or Kinase')  # required=True,
     parser.add_argument('--model', default='CPIDSCNN', help='GPCR or Kinase')  # required=True,
     parser.add_argument('--dataset', default='human/raw/42/fold_1', help='GPCR or Kinase')  # required=True,
-    parser.add_argument('--save_model', default='True', help='whether save model or not')
+    parser.add_argument('--save_model', default='False', help='whether save model or not')
     parser.add_argument('--lr', type=float, default=5e-4, help='learning rate')
     parser.add_argument('--batch_size', type=int, default=512, help='batch_size')
     args = parser.parse_args()

@@ -10,7 +10,7 @@ from torch import Tensor
 from collections import OrderedDict
 
 '''
-使用A1即可
+使用A4+A5
 '''
 
 
@@ -170,7 +170,7 @@ class GraphDenseNet(nn.Module):
     def __init__(self, epochs, steps_per_epoch,n,num_input_features, out_dim):
         super().__init__()
         self.dropout_late = math.ceil((epochs * steps_per_epoch) / n)
-        self.convs = nn.ModuleList([gnn.GraphConv(num_input_features, out_dim) for _ in range(3)])
+        self.convs = nn.ModuleList([gnn.GraphConv(num_input_features, out_dim) for _ in range(5)])
         self.norm = NodeLevelBatchNorm(out_dim)
         self.dropout = nn.Dropout(0.2)
         self.classifer = nn.Linear(out_dim, 96)
@@ -189,33 +189,6 @@ class GraphDenseNet(nn.Module):
 
         return x
 
-
-
-
-# class GraphConvBn(nn.Module):
-#     def __init__(self, num_input_features, out_dim):
-#         super().__init__()
-#         self.conv1 = gnn.GraphConv(num_input_features, out_dim)
-#         self.conv2 = gnn.GraphConv(num_input_features, out_dim)
-#         self.conv3 = gnn.GraphConv(num_input_features, out_dim)
-#         self.norm = NodeLevelBatchNorm(out_dim)
-#         self.dropout = nn.Dropout(0.2)
-#         self.classifer = nn.Linear(num_input_features, out_dim)
-#
-#     def forward(self, data):
-#         x, edge_index, batch = data.x, data.edge_index, data.batch
-#         x1 = self.conv1(x, edge_index)
-#         x2 = self.conv2(x, edge_index)
-#         x3 = self.conv3(x, edge_index)
-#         x = x1 + x2 + x3
-#         x = self.norm(x)
-#         x = gnn.global_max_pool(x, data.batch)
-#         x = F.relu(x)
-#         x = self.dropout(x)
-#         x = self.classifer(x)
-#         # data.x = F.relu(self.norm(self.conv(x, edge_index)))
-#
-#         return x
 class ProteinTransformerEncoder(nn.Module):
     def __init__(self, embedding_num, out_dim, num_layers=6, num_heads=8):
         super().__init__()
@@ -268,7 +241,6 @@ class CPINE(nn.Module):
         self.dropout_late = math.ceil((epochs * steps_per_epoch) / n)
         self.protein_encoder = TargetRepresentation(block_num=3, vocab_size=25 + 1, embedding_num=128)
 
-        # self.protein_encoder = ProteinTransformerEncoder(embedding_num, hid_dim)
         self.ligand_encoder = GraphDenseNet(epochs, steps_per_epoch,n,num_input_features=87, out_dim=228)
 
         self.classifier = nn.Sequential(
@@ -281,7 +253,7 @@ class CPINE(nn.Module):
             nn.Linear(256, out_dim)
         )
         self.classifier1 = nn.Sequential(
-            nn.Linear(324, 1024),
+            nn.Linear(filter_num * 3 * 2, 1024),
             nn.ReLU(),
             nn.Dropout(drop_rate),
             nn.Linear(1024, 1024),
@@ -302,7 +274,7 @@ class CPINE(nn.Module):
         if i >= (self.dropout_late) // 2:
             x = self.classifier(x)
         else:
-            x = self.classifier(x)
+            x = self.classifier1(x)
 
         return x
 

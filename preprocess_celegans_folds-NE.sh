@@ -8,26 +8,20 @@ preprocess_fold() {
     python preprocessing_celegans-NE.py --dataset "$1"
 }
 
-# Preprocess all the folds for the 42 series.
-preprocess_fold data/celegans/raw/42/fold_1
-preprocess_fold data/celegans/raw/42/fold_2
-preprocess_fold data/celegans/raw/42/fold_3
-preprocess_fold data/celegans/raw/42/fold_4
-preprocess_fold data/celegans/raw/42/fold_5
+# Function to preprocess all folds for a given series.
+preprocess_series() {
+    local series="$1"
+    for fold in {1..5}; do
+        preprocess_fold "data/celegans-NE/raw/${series}/fold_${fold}"
+    done
+}
 
-# Preprocess all the folds for the 52 series.
-preprocess_fold data/celegans/raw/52/fold_1
-preprocess_fold data/celegans/raw/52/fold_2
-preprocess_fold data/celegans/raw/52/fold_3
-preprocess_fold data/celegans/raw/52/fold_4
-preprocess_fold data/celegans/raw/52/fold_5
+# Array of dataset series
+dataset_series=(42 52 62)
 
-# Preprocess all the folds for the 62 series.
-preprocess_fold data/celegans/raw/62/fold_1
-preprocess_fold data/celegans/raw/62/fold_2
-preprocess_fold data/celegans/raw/62/fold_3
-preprocess_fold data/celegans/raw/62/fold_4
-preprocess_fold data/celegans/raw/62/fold_5
+# Loop through each dataset series and preprocess all folds
+for series in "${dataset_series[@]}"; do
+    preprocess_series "${series}"
+done
 
 echo "Preprocessing for all C. elegans dataset folds is complete."
-

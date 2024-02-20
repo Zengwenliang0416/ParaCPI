@@ -87,6 +87,15 @@ def index2adj(edge_index):
         adjacency_matrix[e2][e1] = 1  # 无向图
     return adjacency_matrix
 def adj2index(edge_index):
+    adj = to_dense_adj(edge_index)
+    edge_index_square, _ = torch_sparse.spspmm(edge_index, None, edge_index, None, adj.shape[1], adj.shape[1],
+                                               adj.shape[1], coalesced=True)
+    edge_index_cube, _ = torch_sparse.spspmm(edge_index_square, None, edge_index, None, adj.shape[1], adj.shape[1],
+                                             adj.shape[1], coalesced=True)
+    edge_index_quad, _ = torch_sparse.spspmm(edge_index_cube, None, edge_index, None, adj.shape[1], adj.shape[1],
+                                             adj.shape[1], coalesced=True)
+    edge_index_quin, _ = torch_sparse.spspmm(edge_index_quad, None, edge_index, None, adj.shape[1], adj.shape[1],
+                                             adj.shape[1], coalesced=True)
     A = index2adj(edge_index)
 
     A = [[1. if x != 0. else 0. for x in row] for row in A]
@@ -245,26 +254,26 @@ class GNNDataset(InMemoryDataset):
 
 
 if __name__ == "__main__":
-    # python preprocessing_celegans-NE.py --dataset celegans/raw/42/fold_1
-    # python preprocessing_celegans-NE.py --dataset celegans/raw/42/fold_2
-    # python preprocessing_celegans-NE.py --dataset celegans/raw/42/fold_3
-    # python preprocessing_celegans-NE.py --dataset celegans/raw/42/fold_4
-    # python preprocessing_celegans-NE.py --dataset celegans/raw/42/fold_5
-
-    # python preprocessing_celegans-NE.py --dataset celegans/raw/52/fold_1
-    # python preprocessing_celegans-NE.py --dataset celegans/raw/52/fold_2
-    # python preprocessing_celegans-NE.py --dataset celegans/raw/52/fold_3
-    # python preprocessing_celegans-NE.py --dataset celegans/raw/52/fold_4
-    # python preprocessing_celegans-NE.py --dataset celegans/raw/52/fold_5
-
-    # python preprocessing_celegans-NE.py --dataset celegans/raw/62/fold_1
-    # python preprocessing_celegans-NE.py --dataset celegans/raw/62/fold_2
-    # python preprocessing_celegans-NE.py --dataset celegans/raw/62/fold_3
-    # python preprocessing_celegans-NE.py --dataset celegans/raw/62/fold_4
-    # python preprocessing_celegans-NE.py --dataset celegans/raw/62/fold_5
+    # python preprocessing_celegans.py --dataset data/celegans/raw/42/fold_1
+    # python preprocessing_celegans.py --dataset data/celegans/raw/42/fold_2
+    # python preprocessing_celegans.py --dataset data/celegans/raw/42/fold_3
+    # python preprocessing_celegans.py --dataset data/celegans/raw/42/fold_4
+    # python preprocessing_celegans.py --dataset data/celegans/raw/42/fold_5
+    #
+    # python preprocessing_celegans.py --dataset data/celegans/raw/52/fold_1
+    # python preprocessing_celegans.py --dataset data/celegans/raw/52/fold_2
+    # python preprocessing_celegans.py --dataset data/celegans/raw/52/fold_3
+    # python preprocessing_celegans.py --dataset data/celegans/raw/52/fold_4
+    # python preprocessing_celegans.py --dataset data/celegans/raw/52/fold_5
+    #
+    # python preprocessing_celegans.py --dataset data/celegans/raw/62/fold_1
+    # python preprocessing_celegans.py --dataset data/celegans/raw/62/fold_2
+    # python preprocessing_celegans.py --dataset data/celegans/raw/62/fold_3
+    # python preprocessing_celegans.py --dataset data/celegans/raw/62/fold_4
+    # python preprocessing_celegans.py --dataset data/celegans/raw/62/fold_5
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', default='data/human/raw/42/fold_1', help='GPCR or Kinase')  # required=True,
+    parser.add_argument('--dataset', default='data/celegans-NE/raw/42/fold_1', help='GPCR or Kinase')  # required=True,
     args = parser.parse_args()
 
     GNNDataset(root=args.dataset)

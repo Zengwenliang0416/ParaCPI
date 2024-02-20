@@ -252,7 +252,7 @@ class CPIGRB(nn.Module):
             nn.Linear(256, out_dim)
         )
         self.classifier1 = nn.Sequential(
-            nn.Linear(324, 1024),
+            nn.Linear(filter_num * 3 * 2, 1024),
             nn.ReLU(),
             nn.Dropout(drop_rate),
             nn.Linear(1024, 1024),

@@ -11,7 +11,7 @@ train_fold() {
 # Function to train all folds for a given dataset series
 train_series() {
     for fold in {1..5}; do
-        train_fold "celegans/raw/$1/fold_$fold" CPIParaGNN
+        train_fold "celegans-NE/raw/$1/fold_$fold" CPIParaGNN
     done
 }
 
