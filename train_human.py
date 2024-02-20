@@ -93,26 +93,26 @@ def val(model, criterion, dataloader, device):
 
 def main():
     parser = argparse.ArgumentParser()
-    # 对比实验
+    # 瀵规瘮瀹為獙
     # python train_human.py --dataset human/raw/42/fold_1
     # python train_human.py --dataset human/raw/42/fold_2
     # python train_human.py --dataset human/raw/42/fold_3
     # python train_human.py --dataset human/raw/42/fold_4
     # python train_human.py --dataset human/raw/42/fold_5
-
+    #
     # python train_human.py --dataset human/raw/52/fold_1
     # python train_human.py --dataset human/raw/52/fold_2
     # python train_human.py --dataset human/raw/52/fold_3
     # python train_human.py --dataset human/raw/52/fold_4
     # python train_human.py --dataset human/raw/52/fold_5
-
+    #
     # python train_human.py --dataset human/raw/62/fold_1
     # python train_human.py --dataset human/raw/62/fold_2
     # python train_human.py --dataset human/raw/62/fold_3
     # python train_human.py --dataset human/raw/62/fold_4
     # python train_human.py --dataset human/raw/62/fold_5
 
-    #消融实验
+    #娑堣瀺瀹為獙
     # python train_human.py --dataset human/raw/42/fold_1 --model CPIDSCNN
     # python train_human.py --dataset human/raw/42/fold_2 --model CPIDSCNN
     # python train_human.py --dataset human/raw/42/fold_3 --model CPIDSCNN
@@ -162,16 +162,7 @@ def main():
     epochs = 100
     steps_per_epoch = 10
     n = len(train_loader)
-    if(args.dataset == "ParaCPI"):
-        model = ParaCPI(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
-    elif(args.dataset == "CPINE"):
-        model = CPINE(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
-    elif(args.dataset == "CPIDSCNN"):
-        model = CPIDSCNN(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
-    elif(args.dataset == "CPIGRB"):
-        model = CPIGRB(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
-    elif (args.dataset == "CPIParaGNN"):
-        model = CPIParaGNN(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
+    model = ParaCPI(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
 
     num_iter = math.ceil((epochs * steps_per_epoch) / len(train_loader))
 
@@ -206,8 +197,8 @@ def main():
 
                 test_loss, test_pre, test_rec, test_auc, test_aupr, test_mcc, test_f1 = val(model, criterion, test_loader, device)
 
-                msg = "%d_epoch-%d_loss-%.3f_pre-%.3f_rec-%.3f_auc-%.3f_aupr-%.3f_mcc-%.3f_f1-%.3f" % (
-                    params.get("dataset"), global_epoch, test_loss, test_pre, test_rec, test_auc, test_aupr, test_mcc, test_f1)
+                msg = "%s_epoch-%d_loss-%.3f_pre-%.3f_rec-%.3f_auc-%.3f_aupr-%.3f_mcc-%.3f_f1-%.3f" % (
+                    params.get("dataset").replace("/","-"), global_epoch, test_loss, test_pre, test_rec, test_auc, test_aupr, test_mcc, test_f1)
                 logger.info(msg)
 
                 if save_model and global_epoch > epochs -10:

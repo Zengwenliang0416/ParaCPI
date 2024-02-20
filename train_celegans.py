@@ -97,13 +97,13 @@ def main():
     # python train_celegans.py --dataset celegans/raw/42/fold_3
     # python train_celegans.py --dataset celegans/raw/42/fold_4
     # python train_celegans.py --dataset celegans/raw/42/fold_5
-
+    #
     # python train_celegans.py --dataset celegans/raw/52/fold_1
     # python train_celegans.py --dataset celegans/raw/52/fold_2
     # python train_celegans.py --dataset celegans/raw/52/fold_3
     # python train_celegans.py --dataset celegans/raw/52/fold_4
     # python train_celegans.py --dataset celegans/raw/52/fold_5
-
+    #
     # python train_celegans.py --dataset celegans/raw/62/fold_1
     # python train_celegans.py --dataset celegans/raw/62/fold_2
     # python train_celegans.py --dataset celegans/raw/62/fold_3
@@ -160,17 +160,7 @@ def main():
     epochs = 100
     steps_per_epoch = 10
     n = len(train_loader)
-    if(args.dataset == "ParaCPI"):
-        model = ParaCPI(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
-    elif(args.dataset == "CPINE"):
-        model = CPINE(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
-    elif(args.dataset == "CPIDSCNN"):
-        model = CPIDSCNN(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
-    elif(args.dataset == "CPIGRB"):
-        model = CPIGRB(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
-    elif (args.dataset == "CPIParaGNN"):
-        model = CPIParaGNN(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
-
+    model = ParaCPI(epochs, steps_per_epoch, n, filter_num=32, out_dim=2).to(device)
 
     num_iter = math.ceil((epochs * steps_per_epoch) / len(train_loader))
 

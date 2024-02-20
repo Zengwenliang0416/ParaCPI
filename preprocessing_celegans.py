@@ -255,23 +255,23 @@ class GNNDataset(InMemoryDataset):
 
 
 if __name__ == "__main__":
-    # python preprocessing_celegans.py --dataset celegans/raw/42/fold_1
-    # python preprocessing_celegans.py --dataset celegans/raw/42/fold_2
-    # python preprocessing_celegans.py --dataset celegans/raw/42/fold_3
-    # python preprocessing_celegans.py --dataset celegans/raw/42/fold_4
-    # python preprocessing_celegans.py --dataset celegans/raw/42/fold_5
-
-    # python preprocessing_celegans.py --dataset celegans/raw/52/fold_1
-    # python preprocessing_celegans.py --dataset celegans/raw/52/fold_2
-    # python preprocessing_celegans.py --dataset celegans/raw/52/fold_3
-    # python preprocessing_celegans.py --dataset celegans/raw/52/fold_4
-    # python preprocessing_celegans.py --dataset celegans/raw/52/fold_5
-
-    # python preprocessing_celegans.py --dataset celegans/raw/62/fold_1
-    # python preprocessing_celegans.py --dataset celegans/raw/62/fold_2
-    # python preprocessing_celegans.py --dataset celegans/raw/62/fold_3
-    # python preprocessing_celegans.py --dataset celegans/raw/62/fold_4
-    # python preprocessing_celegans.py --dataset celegans/raw/62/fold_5
+    # python preprocessing_celegans.py --dataset data/celegans/raw/42/fold_1
+    # python preprocessing_celegans.py --dataset data/celegans/raw/42/fold_2
+    # python preprocessing_celegans.py --dataset data/celegans/raw/42/fold_3
+    # python preprocessing_celegans.py --dataset data/celegans/raw/42/fold_4
+    # python preprocessing_celegans.py --dataset data/celegans/raw/42/fold_5
+    #
+    # python preprocessing_celegans.py --dataset data/celegans/raw/52/fold_1
+    # python preprocessing_celegans.py --dataset data/celegans/raw/52/fold_2
+    # python preprocessing_celegans.py --dataset data/celegans/raw/52/fold_3
+    # python preprocessing_celegans.py --dataset data/celegans/raw/52/fold_4
+    # python preprocessing_celegans.py --dataset data/celegans/raw/52/fold_5
+    #
+    # python preprocessing_celegans.py --dataset data/celegans/raw/62/fold_1
+    # python preprocessing_celegans.py --dataset data/celegans/raw/62/fold_2
+    # python preprocessing_celegans.py --dataset data/celegans/raw/62/fold_3
+    # python preprocessing_celegans.py --dataset data/celegans/raw/62/fold_4
+    # python preprocessing_celegans.py --dataset data/celegans/raw/62/fold_5
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', default='data/celegans/raw/42/fold_1', help='GPCR or Kinase')  # required=True,
