@@ -2,21 +2,20 @@
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 import math
-import numpy as np
 import torch.optim as optim
 import torch
 import torch.nn as nn
 from torch_geometric.data import DataLoader
 import torch.nn.functional as F
 import argparse
-from sklearn.metrics import average_precision_score
+from sklearn.metrics import precision_recall_curve,auc
 from metrics import accuracy, precision, auc_score, recall
 from dataset import *
-from model_DrugBank import MGraphDTA
-# from model3_baseline import MGraphDTA
+from model_GPCR import MGraphDTA
 from utils import *
 from log.train_logger import TrainLogger
-from preprocessing_DrugBank import *
+from preprocess.preprocessing_GPCR import *
+
 def getROCE(predList,targetList,roceRate):
     p = sum(targetList)
     n = len(targetList) - p
@@ -64,29 +63,27 @@ def val(model, criterion, dataloader, device):
     pred_cls = np.concatenate(pred_cls_list, axis=0)
     label = np.concatenate(label_list, axis=0)
 
-
-    pre = round(precision(label, pred_cls), 3)
-    rec = round(recall(label, pred_cls), 3)
-    auc = round(auc_score(label, pred), 3)
-
-    # pre = precision(label, pred_cls)
-    # rec = recall(label, pred_cls)
-    # auc = auc_score(label, pred)
-
+    acc = accuracy(label, pred_cls)
+    pre = precision(label, pred_cls)
+    rec = recall(label, pred_cls)
+    AUC = auc_score(label, pred)
+    tpr,fpr,_ = precision_recall_curve(label, pred_cls)
+    prc = auc(fpr,tpr)
+    # test_roc = average_precision_score(label, pred_cls)
 
     epoch_loss = running_loss.get_average()
     running_loss.reset()
 
     model.train()
 
-    return epoch_loss, pre, rec, auc
+    return epoch_loss, acc, pre, rec, AUC,prc
 
 def main():
     parser = argparse.ArgumentParser()
 
     # Add argument BindingDB
-    parser.add_argument('--dataset', default='DrugBank', help='GPCR or Kinase') #required=True,
-    parser.add_argument('--save_model', default='True', help='whether save model or not')
+    parser.add_argument('--dataset', default='GPCR', help='GPCR or Kinase') #required=True,
+    parser.add_argument('--save_model', default='Ture', help='whether save model or not')
     parser.add_argument('--lr', type=float, default=5e-4, help='learning rate')
     parser.add_argument('--batch_size', type=int, default=512, help='batch_size')
     args = parser.parse_args()
@@ -118,7 +115,7 @@ def main():
     test_loader = DataLoader(test_set, batch_size=params['batch_size'], shuffle=False, num_workers=4)
 
     device = torch.device('cuda:0')
-    epochs = 200
+    epochs = 300
     steps_per_epoch = 10
     n = len(train_loader)
     model = MGraphDTA(epochs, steps_per_epoch,n,filter_num=32, out_dim=2).to(device)
@@ -132,7 +129,6 @@ def main():
     global_epoch = 0
 
     running_loss = AverageMeter()
-    torch.cuda.empty_cache()
     model.train()
 
     for i in range(num_iter):
@@ -154,18 +150,16 @@ def main():
 
                 epoch_loss = running_loss.get_average()
                 running_loss.reset()
+                train_loss, train_acc, train_pre, train_rec, train_auc,train_roc= val(model, criterion, train_loader, device)
 
-                test_loss, test_pre, test_rec, test_auc= val(model, criterion, test_loader, device)
+                test_loss, test_acc, test_pre, test_rec, test_auc,test_roc= val(model, criterion, test_loader, device)
 
-                msg = "epoch-%d, loss-%.3f, test_pre-%.3f, test_rec-%.3f, test_auc-%.3f" % (global_epoch, test_loss,test_pre, test_rec, test_auc)
+                msg = "epoch-%d, loss-%.3f, train_auc-%.3f, train_prc-%.3f, test_auc-%.3f, test_prc-%.3f" % (global_epoch, test_loss,train_auc,train_roc,test_auc,test_roc)
                 logger.info(msg)
 
-                # if save_model and test_auc >=0.988:
-                #     save_model_dict(model, logger.get_model_dir(), msg)
-                if i >= num_iter//2:
+                if save_model and test_auc >=0.85:
                     save_model_dict(model, logger.get_model_dir(), msg)
 
 
 if __name__ == "__main__":
-    
     main()
